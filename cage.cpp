@@ -541,6 +541,59 @@ std::vector<areas> getClusters(int minpts, double *geneWeights, bool epsilonIsMi
 
 }
 
+
+
+std::vector<areas> getClustersMeanShift(int minpts, double *geneWeights, bool epsilonIsMinRadius)
+{
+    /*method explanation:
+    if epsilonIsMinRadius, epsilon value between two cases is small one of their radiuses, so both should cover eachother to extend cluster.
+    else, to expand a cluster from a point 'P' it is enough that its radius covers another point, and number of points covered this way is >=minpts
+    */
+    std::vector<areas> listAreas;
+    updateDistanceMatrix(geneWeights);
+    double* radiusOfArea =  getRadiuses();
+    std::vector<int>* neighborPts;
+
+    int* casesInAreaCenter = getCaseNeighbors(radiusOfArea, neighborPts, epsilonIsMinRadius);
+    for(int i=0; i<totalSamples; i++)
+        listSamples[i].covered = false;
+
+
+    for(int i = 0; i < totalSamples; i++){
+        if(casesInAreaCenter[i]>=minpts && !listSamples[i].covered){
+            double* meanVector = new double[numberGene];
+            for(int j = 0; j < numberGene; j++)
+                meanVector[j] = listSamples[i].values[j];
+            int maxPoints = 0;
+            int centerIndex = -1;
+            
+            std::vector<int> ids;
+            double* distancesVector = getDistancesVector(meanVector);
+            
+            
+            
+            areas a;
+            a.numCases = ids.size();
+            a.caseIDs = new int[ids.size()];
+            a.centerId = centerIndex;
+            std::copy(ids.begin(), ids.end(), a.caseIDs);
+            listAreas.push_back(a);
+        }
+
+    }
+
+    delete[] neighborPts;
+    delete[] radiusOfArea;
+    delete[] casesInAreaCenter;
+    return listAreas;
+
+
+}
+
+
+
+
+
 /*bool continueLoop(int c, int cc, int cp, int ac, int ap, int method, double cw, double pw){
     if(c>10)
         return false;
